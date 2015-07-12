@@ -23,6 +23,8 @@ fn open(path: &str) -> Result<Makefile, Error> {
 }
 
 fn read_targets(buff: &mut io::BufRead) -> Result<Vec<String>, Error> {
+    let phony_targets: Vec<String> = Vec::new();
+
     loop {
         let ctn =  &mut String::new();
         match buff.read_line(ctn) {
@@ -39,7 +41,12 @@ fn read_targets(buff: &mut io::BufRead) -> Result<Vec<String>, Error> {
         }
     }
 
-    Ok(vec![])
+    Ok(phony_targets)
+}
+
+fn is_phoniphy_macro(line: &str) -> bool {
+    let re = Regex::new(r"^\s*#\s*\[phoniphy\]").unwrap();
+    return re.is_match(line);
 }
 
 fn get_targets_from_line(l: &str) -> Option<Vec<&str>> {
@@ -72,6 +79,51 @@ fn split_targets(t: &str) -> Vec<&str> {
     }
 
     targets
+}
+
+#[cfg(test)]
+mod test_is_phoniphy_macro {
+    use super::is_phoniphy_macro;
+
+    #[test]
+    fn it_retunrs_true_for_perfect_macro_syntax() {
+        assert_eq!(is_phoniphy_macro("#[phoniphy]"), true);
+    }
+
+    #[test]
+    fn it_returns_true_if_macro_is_prefixed_with_blanks() {
+        assert_eq!(is_phoniphy_macro("\t #[phoniphy]"), true);
+    }
+
+    #[test]
+    fn it_returns_true_if_macro_has_trailing_blanks() {
+        assert_eq!(is_phoniphy_macro("#[phoniphy]    "), true);
+    }
+
+    #[test]
+    fn it_returns_true_if_macro_has_blanks_betweeen_comment_and_macro() {
+        assert_eq!(is_phoniphy_macro("# \t   [phoniphy]"), true);
+    }
+
+    #[test]
+    fn it_returns_true_if_macro_has_blanks_everywhere() {
+        assert_eq!(is_phoniphy_macro("   #    [phoniphy] \t   "), true);
+    }
+
+    #[test]
+    fn it_returns_false_if_not_surrounded_by_square_brackets() {
+        assert_eq!(is_phoniphy_macro("#phoniphy]"), false);
+    }
+
+    #[test]
+    fn it_returns_false_if_line_is_not_makefile_comment() {
+        assert_eq!(is_phoniphy_macro("[phoniphy]"), false);
+    }
+
+    #[test]
+    fn it_returns_false_if_macro_is_not_phoniphy() {
+        assert_eq!(is_phoniphy_macro("[phoni]"), false);
+    }
 }
 
 #[cfg(test)]
