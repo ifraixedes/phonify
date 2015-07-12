@@ -31,6 +31,7 @@ fn read_targets(buff: &mut io::BufRead) -> Result<Vec<String>, Error> {
             Ok(s) => match s {
                 0 => break,
                 _ => {
+                    // TODO contine implementation here!!
                     println!("read {0}", s);
                     break;
                 }
@@ -44,11 +45,16 @@ fn read_targets(buff: &mut io::BufRead) -> Result<Vec<String>, Error> {
     Ok(phony_targets)
 }
 
+/// Take a str which represents a makefile line and check if it's
+/// a phoniphy marcro ("#[phoniphy]")
 fn is_phoniphy_macro(line: &str) -> bool {
     let re = Regex::new(r"^\s*#\s*\[phoniphy\]").unwrap();
     return re.is_match(line);
 }
 
+/// Take the str which represents makefile line and checks if it's a target
+/// definition; if it's a target definition line then extracts the part of
+/// the target name(s)
 fn get_targets_from_line(l: &str) -> Option<Vec<&str>> {
     let parts: Vec<&str> = l.splitn(2, ':').collect();
 
@@ -62,6 +68,8 @@ fn get_targets_from_line(l: &str) -> Option<Vec<&str>> {
     None
 }
 
+/// Take a str which represents a makefile target definition and extract the tagets
+/// names which including excluding it if it's a patterns '%'
 fn split_targets(t: &str) -> Vec<&str> {
     let mut targets = vec![];
     let re = Regex::new(r"\S+").unwrap();
